@@ -1,6 +1,6 @@
 import copy
 from dlgo.gotypes import Player, Point
-#from dlgo.scoring import compute_game_result
+from dlgo.scoring import compute_game_result
 # tag::import_zobrist[]
 from dlgo import zobrist
 # end::import_zobrist[]
@@ -105,7 +105,15 @@ class Board:
                 self._replace_string(other_color_string.without_liberty(point))
             else:
                 self._remove_string(other_color_string)  # <5>
+# <1> Until this line `place_stone` remains the same.
+# <2> You merge any adjacent strings of the same color.
+# <3> Next, you apply the hash code for this point and player
+# <4> Then you reduce liberties of any adjacent strings of the opposite color.
+# <5> If any opposite color strings now have zero liberties, remove them.
+# end::apply_zobrist[]
 
+
+# tag::unapply_zobrist[]
     def _replace_string(self, new_string):  # <1>
         for point in new_string.stones:
             self._grid[point] = new_string
@@ -287,3 +295,11 @@ class GameState:
         moves.append(Move.resign())
 
         return moves
+
+    def winner(self):
+        if not self.is_over():
+            return None
+        if self.last_move.is_resign:
+            return self.next_player
+        game_result = compute_game_result(self)
+        return game_result.winner
